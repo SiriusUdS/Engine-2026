@@ -58,6 +58,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ServoDriver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ValveController.c
     # Add user sources here
 )
 
