@@ -1,45 +1,74 @@
-# Object files
+# ==========================================
+# C/C++ Build Artifacts
+# ==========================================
 *.o
-*.ko
 *.obj
+*.d
+*.crf
+*.dep
+*.bak
+
+# Firmware / Executable Outputs
 *.elf
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
+*.bin
 *.hex
-
-# Misc
 *.map
-*.m
-*.png
+*.dis
+*.list
+*.out
 
-# Eclipse CDT project files
-.cproject
-.project
-.settings/
+# ==========================================
+# STM32CubeIDE / Eclipse
+# ==========================================
+Debug/
+Release/
+.metadata/
+.recommenders/
+*.launch
+# NOTE: Do NOT ignore .project, .cproject, or .ioc files. 
+# These are required to rebuild the project and generate code.
 
-# Vagrant directory
-.vagrant/
+# ==========================================
+# Keil MDK (uVision)
+# ==========================================
+Objects/
+Listings/
+*.uvoptx
+*.uvguix.*
+*.Administrator
+# NOTE: Do NOT ignore *.uvprojx (the actual project file)
 
-# Include makefiles
-!Makefile
-*~
+# ==========================================
+# IAR Embedded Workbench
+# ==========================================
+settings/
+*.ewt
 
-# Libraries
-/lib
+# ==========================================
+# PlatformIO
+# ==========================================
+.pio/
+.vscode/
+
+# ==========================================
+# CMake / Make
+# ==========================================
+build/
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# ==========================================
+# OS Generated Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
