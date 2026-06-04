@@ -75,8 +75,6 @@ typedef struct {
 
 FDCAN_HandleTypeDef hfdcan1;
 
-IWDG_HandleTypeDef hiwdg2;
-
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
@@ -91,7 +89,6 @@ Valve valves[] = {
 /* Private function prototypes -----------------------------------------------*/
 static void MX_GPIO_Init(void);
 static void MX_FDCAN1_Init(void);
-static void MX_IWDG2_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -146,7 +143,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FDCAN1_Init();
-  MX_IWDG2_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
@@ -292,10 +288,10 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.AutoRetransmission = ENABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 5;
-  hfdcan1.Init.NominalSyncJumpWidth = 4;
-  hfdcan1.Init.NominalTimeSeg1 = 15;
-  hfdcan1.Init.NominalTimeSeg2 = 4;
+  hfdcan1.Init.NominalPrescaler = 25;
+  hfdcan1.Init.NominalSyncJumpWidth = 1;
+  hfdcan1.Init.NominalTimeSeg1 = 13;
+  hfdcan1.Init.NominalTimeSeg2 = 2;
   hfdcan1.Init.DataPrescaler = 1;
   hfdcan1.Init.DataSyncJumpWidth = 1;
   hfdcan1.Init.DataTimeSeg1 = 1;
@@ -321,35 +317,6 @@ static void MX_FDCAN1_Init(void)
   /* USER CODE BEGIN FDCAN1_Init 2 */
 
   /* USER CODE END FDCAN1_Init 2 */
-
-}
-
-/**
-  * @brief IWDG2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_IWDG2_Init(void)
-{
-
-  /* USER CODE BEGIN IWDG2_Init 0 */
-
-  /* USER CODE END IWDG2_Init 0 */
-
-  /* USER CODE BEGIN IWDG2_Init 1 */
-
-  /* USER CODE END IWDG2_Init 1 */
-  hiwdg2.Instance = IWDG2;
-  hiwdg2.Init.Prescaler = IWDG_PRESCALER_4;
-  hiwdg2.Init.Window = 4095;
-  hiwdg2.Init.Reload = 4095;
-  if (HAL_IWDG_Init(&hiwdg2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN IWDG2_Init 2 */
-
-  /* USER CODE END IWDG2_Init 2 */
 
 }
 

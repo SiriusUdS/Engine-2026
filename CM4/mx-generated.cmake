@@ -5,7 +5,7 @@ set(MX_Defines_Syms
 	CORE_CM4 
 	USE_HAL_DRIVER 
 	STM32H747xx 
-	USE_PWR_DIRECT_SMPS_SUPPLY
+	USE_PWR_LDO_SUPPLY
     $<$<CONFIG:Debug>:DEBUG>
 )
 # STM32CubeMX generated include paths
@@ -48,7 +48,6 @@ set(STM32_Drivers_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_fdcan.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_iwdg.c
 )
 
 # Drivers Midllewares
