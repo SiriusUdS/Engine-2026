@@ -129,7 +129,9 @@ int main(void)
 
   valveInit(&valves[0], 100.0f);
 
-  CAN_Init(&hfdcan1);
+  if (!CAN_Init(&hfdcan1, CAN_NODE_ENGINE_H747)) {
+    Error_Handler();
+  }
 
   /* USER CODE END 2 */
 
