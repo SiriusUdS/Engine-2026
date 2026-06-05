@@ -1,6 +1,5 @@
 #pragma once
-#include "CANHeader.h"
-#include "can.h"
+#include "dil/can.h"
 #include "main.h"
 
 typedef struct {

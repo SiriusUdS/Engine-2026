@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "can.h"
+#include "dil/can.h"
 #include "stm32h7xx_hal_fdcan.h"
 #include "stm32h7xx_hal_rcc_ex.h"
 #include "ValveController.h"
@@ -31,18 +31,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define FDCAN_RX_BUFFER_SIZE 32
-
-typedef struct {
-    FDCAN_RxHeaderTypeDef header;
-    uint8_t data[8];
-} FDCAN_RxMessageTypeDef;
-
-typedef struct {
-    FDCAN_RxMessageTypeDef messages[FDCAN_RX_BUFFER_SIZE];
-    volatile uint16_t head;
-    volatile uint16_t tail;
-} FDCAN_RingBufferTypeDef;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -64,11 +52,6 @@ typedef struct {
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
-// Target id is at [4:1]
-#define TARGET_ID_SHIFT 4
-#define TARGET_ID_MASK (0xF << TARGET_ID_SHIFT)
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -78,8 +61,6 @@ FDCAN_HandleTypeDef hfdcan1;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
-FDCAN_RingBufferTypeDef fdcanRxBuffer = { .head = 0, .tail = 0 };
-
 Valve valves[] = {
     {{&htim1, TIM_CHANNEL_1, 1200, 1800}, VALVE_STATE_UNKNOWN, 0, 100},
     {{&htim1, TIM_CHANNEL_2, 1200, 1800}, VALVE_STATE_UNKNOWN, 0, 100}
@@ -148,36 +129,7 @@ int main(void)
 
   valveInit(&valves[0], 100.0f);
 
-  FDCAN_FilterTypeDef sFilterConfig;
-
-  sFilterConfig.IdType = FDCAN_EXTENDED_ID;
-  sFilterConfig.FilterIndex = 0;
-  sFilterConfig.FilterType = FDCAN_FILTER_MASK;
-  sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  sFilterConfig.FilterID1 = (CAN_NODE_ENGINE_H747 << TARGET_ID_SHIFT);
-  sFilterConfig.FilterID2 = TARGET_ID_MASK;
-
-  if(HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig) != HAL_OK){
-    Error_Handler();
-  }
-
-  if(HAL_FDCAN_ConfigGlobalFilter(
-    &hfdcan1,
-    FDCAN_REJECT,
-    FDCAN_REJECT,
-    FDCAN_REJECT_REMOTE,
-    FDCAN_REJECT_REMOTE
-  ) != HAL_OK){
-    Error_Handler();
-  }
-
-  if(HAL_FDCAN_Start(&hfdcan1) != HAL_OK){
-    Error_Handler();
-  }
-
-  if(HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0)){
-    Error_Handler();
-  }
+  CAN_Init(&hfdcan1);
 
   /* USER CODE END 2 */
 
@@ -185,81 +137,59 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    if (fdcanRxBuffer.tail != fdcanRxBuffer.head) 
+    CANHeader header;
+    uint8_t rxData[8];
+
+    if (CAN_Receive(&header, rxData))
     {
-        // Pointeur sur le message actuel
-        FDCAN_RxHeaderTypeDef *pHeader = &fdcanRxBuffer.messages[fdcanRxBuffer.tail].header;
-        uint8_t *pData = fdcanRxBuffer.messages[fdcanRxBuffer.tail].data;
-
-        CANHeader header;
-        header.code = pHeader->Identifier;
-
-        if (header.frame.targetID == CAN_NODE_ENGINE_H747) 
+      if (header.frame.targetID == CAN_NODE_ENGINE_H747)
+      {
+        switch (header.frame.messageID)
         {
-          switch (header.frame.messageID)
-          {
-          case CAN_ID_CMD_VALVE:
-          {
-            CanValveIndex valve;
-            CanValveCmd cmd;
-            uint32_t ts;
-            
-            // Parse
-            valveCmdPacketParse(pHeader->Identifier, pData, &valve, &cmd, &ts);
+        case CAN_ID_CMD_VALVE:
+        {
+          CanValveIndex valve;
+          CanValveCmd cmd;
+          uint32_t ts;
 
-            // Ouvre/Ferme la valve
-            if (valve == CAN_VALVE_1) {
-              if (cmd == CAN_CMD_OPEN)  valveOpen(&(valves[0]));
-              if (cmd == CAN_CMD_CLOSE) valveClose(&(valves[0]));
-            }
-            else if (valve == CAN_VALVE_2) {
-              if (cmd == CAN_CMD_OPEN)  valveOpen(&(valves[1]));
-              if (cmd == CAN_CMD_CLOSE) valveClose(&(valves[1]));
-            }
+          // Parse
+          valveCmdPacketParse(header.code, rxData, &valve, &cmd, &ts);
 
-            // Envoie la réponse
-            ValveStatusPacket packet;
-            CanValveStatus status;
-            
-            if(valve == CAN_VALVE_1) {
-              status = (valves[0].state == VALVE_STATE_OPEN) ? CAN_STATUS_OPEN : CAN_STATUS_CLOSED;
-            } else {
-              status = (valves[1].state == VALVE_STATE_OPEN) ? CAN_STATUS_OPEN : CAN_STATUS_CLOSED;
-            }
-
-            valveStatusPacketMake(valve, status, &packet);
-
-            FDCAN_TxHeaderTypeDef txHeader = {0};
-            txHeader.Identifier = packet.header.code;
-            txHeader.IdType = FDCAN_EXTENDED_ID;
-            txHeader.TxFrameType = FDCAN_DATA_FRAME;
-            txHeader.DataLength = FDCAN_DLC_BYTES_8;
-            txHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-            txHeader.BitRateSwitch = FDCAN_BRS_OFF;
-            txHeader.FDFormat = FDCAN_CLASSIC_CAN;
-            txHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-            txHeader.MessageMarker = 0;
-
-            if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) > 0)
-            {
-              if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, packet.payload.data) != HAL_OK)
-              {
-                Error_Handler();
-              }
-            }
-            break;
+          // Ouvre/Ferme la valve
+          if (valve == CAN_VALVE_1) {
+            if (cmd == CAN_CMD_OPEN)  valveOpen(&(valves[0]));
+            if (cmd == CAN_CMD_CLOSE) valveClose(&(valves[0]));
           }
-          default:
-            break;
+          else if (valve == CAN_VALVE_2) {
+            if (cmd == CAN_CMD_OPEN)  valveOpen(&(valves[1]));
+            if (cmd == CAN_CMD_CLOSE) valveClose(&(valves[1]));
+          }
+
+          // Envoie la réponse
+          ValveStatusPacket packet;
+          CanValveStatus status;
+
+          if(valve == CAN_VALVE_1) {
+            status = (valves[0].state == VALVE_STATE_OPEN) ? CAN_STATUS_OPEN : CAN_STATUS_CLOSED;
+          } else {
+            status = (valves[1].state == VALVE_STATE_OPEN) ? CAN_STATUS_OPEN : CAN_STATUS_CLOSED;
+          }
+
+          valveStatusPacketMake(valve, status, &packet);
+
+          CAN_Send(packet.header.code, packet.payload.data);
+          break;
+        }
+        default:
+          break;
         }
       }
-
-      fdcanRxBuffer.tail = (fdcanRxBuffer.tail + 1) % FDCAN_RX_BUFFER_SIZE;
     }
 
-    for (int i = 0; i < sizeof(valves) / sizeof(valves[0]); i++) {
+    /*for (int i = 0; i < sizeof(valves) / sizeof(valves[0]); i++) {
       valveUpdate(&valves[i]);
-    }
+    }*/
+   
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -411,28 +341,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
-{
-	if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != 0)
-	{
-		uint16_t next_head = (fdcanRxBuffer.head + 1) % FDCAN_RX_BUFFER_SIZE;
-
-		if (next_head != fdcanRxBuffer.tail) 
-		{
-			if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &fdcanRxBuffer.messages[fdcanRxBuffer.head].header, fdcanRxBuffer.messages[fdcanRxBuffer.head].data) == HAL_OK)
-			{
-				fdcanRxBuffer.head = next_head;
-			}
-		}
-		else
-		{
-			// ERROR Buffer full
-			FDCAN_RxHeaderTypeDef dummyHeader;
-			uint8_t dummyData[8];
-			HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &dummyHeader, dummyData);
-		}
-	}
-}
 /* USER CODE END 4 */
 
 /**

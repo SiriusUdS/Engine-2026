@@ -54,12 +54,14 @@ enable_language(C ASM)
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Inc
 )
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ServoDriver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ValveController.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/dil/can.c
     # Add user sources here
 )
 

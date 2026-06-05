@@ -1,0 +1,3 @@
+[submodule "stm-2026-common"]
+	path = stm-2026-common
+	url = https://github.com/SiriusUdS/stm-2026-common.git
