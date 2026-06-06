@@ -60,10 +60,14 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ServoDriver.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ValveController.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/can/handlers/handlerPing.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/can/handlers/handlerValve.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/dil/ServoDriver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/valve/ValveController.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/dil/can.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/dil/ipc_can.c
+    ${CMAKE_SOURCE_DIR}/../stm-2026-common/Src/can/CANController.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/boardEngine.c
     # Add user sources here
 )
 

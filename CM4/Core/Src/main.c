@@ -30,6 +30,8 @@
    handler, which is disabled (#if 0) for the CAN bridge test. They are left
    un-included so this branch carries no diff to those valve files. Re-add them
    when re-enabling the handler. */
+#include "BoardEngine.h"
+#include "can/CANController.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,10 +66,7 @@ FDCAN_HandleTypeDef hfdcan1;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
-Valve valves[] = {
-    {{&htim1, TIM_CHANNEL_1, 1200, 1800}, VALVE_STATE_UNKNOWN, 0, 100},
-    {{&htim1, TIM_CHANNEL_2, 1200, 1800}, VALVE_STATE_UNKNOWN, 0, 100}
-  };
+static CANController canCtrl;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -135,6 +134,8 @@ int main(void)
   if (!CAN_Init(&hfdcan1, CAN_NODE_ECU)) {
     Error_Handler();
   }
+  BOARD_ENGINE_Init();
+  CANController_Init(&canCtrl, &BOARD_ENGINE);
 
   /* USER CODE END 2 */
 
@@ -211,6 +212,7 @@ int main(void)
       }
     }
 #endif /* disabled local handling - M7 owns RX during the CAN bridge test */
+    CANController_Process(&canCtrl);
 
     /* USER CODE END WHILE */
 
