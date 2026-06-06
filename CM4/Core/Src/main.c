@@ -25,7 +25,7 @@
 #include "dil/ipc_can.h"     /* inter-core CAN bridge (M4 side: IpcCan_M4Service) */
 #include "stm32h7xx_hal_fdcan.h"
 #include "stm32h7xx_hal_rcc_ex.h"
-#include "ValveController.h"
+#include "valve/ValveController.h"
 /* ValveStatusPacket.h / ValveCmdPacket.h are only used by the local valve
    handler, which is disabled (#if 0) for the CAN bridge test. They are left
    un-included so this branch carries no diff to those valve files. Re-add them
@@ -128,8 +128,6 @@ int main(void)
   MX_FDCAN1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
-  valveInit(&valves[0], 100.0f);
 
   if (!CAN_Init(&hfdcan1, CAN_NODE_ECU)) {
     Error_Handler();

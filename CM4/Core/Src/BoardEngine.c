@@ -10,7 +10,7 @@ static ValveHandlerCtx valveCtx = {
     .valveCount = sizeof(valves) / sizeof(valves[0]),
 };
 
-static CanNodeId nodeID = CAN_NODE_ENGINE;
+static CanNodeId nodeID = CAN_NODE_ECU;
 
 static const CANHandlerEntry handlers[] = {
     { CAN_ID_CMD_VALVE, handler_valve, &valveCtx },
@@ -19,7 +19,7 @@ static const CANHandlerEntry handlers[] = {
 
 const CANControllerConfig BOARD_ENGINE = {
     .hfdcan       = &hfdcan1,
-    .nodeID       = CAN_NODE_ENGINE,
+    .nodeID       = CAN_NODE_ECU,
     .handlers     = handlers,
     .handlerCount = sizeof(handlers) / sizeof(handlers[0]),
 };
@@ -29,6 +29,6 @@ void BOARD_ENGINE_Init(void)
     valveInit(&valves[0], 100.0f);
     valveInit(&valves[1], 100.0f);
 
-    if (!CAN_Init(&hfdcan1, CAN_NODE_ENGINE))
+    if (!CAN_Init(&hfdcan1, CAN_NODE_ECU))
         Error_Handler();
 }
