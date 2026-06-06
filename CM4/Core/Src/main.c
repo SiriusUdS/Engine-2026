@@ -135,6 +135,11 @@ int main(void)
   BOARD_ENGINE_Init();
   CANController_Init(&canCtrl, &BOARD_ENGINE);
 
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+
+  uint32_t lastCanTxMs = 0;
+  const uint32_t CAN_TX_INTERVAL_MS = 10;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -210,7 +215,16 @@ int main(void)
       }
     }
 #endif /* disabled local handling - M7 owns RX during the CAN bridge test */
+    uint32_t currentMs = HAL_GetTick();
+
     CANController_Process(&canCtrl);
+    BOARD_ENGINE_Update();
+  
+    if ((currentMs - lastCanTxMs) >= CAN_TX_INTERVAL_MS) {
+      lastCanTxMs = currentMs; 
+
+      BOARD_ENGINE_SendValveStatus();
+    }
 
     /* USER CODE END WHILE */
 
@@ -320,6 +334,10 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
@@ -349,6 +367,7 @@ static void MX_TIM1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
   /* USER CODE END MX_GPIO_Init_1 */
@@ -356,6 +375,12 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pins : VALVE0_OPEN_LIMIT_Pin VALVE0_CLOSE_LIMIT_Pin VALVE1_OPEN_LIMIT_Pin VALVE1_CLOSE_LIMIT_Pin */
+  GPIO_InitStruct.Pin = VALVE0_OPEN_LIMIT_Pin|VALVE0_CLOSE_LIMIT_Pin|VALVE1_OPEN_LIMIT_Pin|VALVE1_CLOSE_LIMIT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
