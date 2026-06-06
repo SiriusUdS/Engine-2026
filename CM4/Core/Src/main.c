@@ -22,11 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "dil/can.h"
-#include "stm32h7xx_hal_fdcan.h"
-#include "stm32h7xx_hal_rcc_ex.h"
-#include "ValveController.h"
-#include "ValveStatusPacket.h"
-#include "ValveCmdPacket.h"
+#include "BoardEngine.h"
+#include "can/CANController.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,10 +58,7 @@ FDCAN_HandleTypeDef hfdcan1;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
-Valve valves[] = {
-    {{&htim1, TIM_CHANNEL_1, 1200, 1800}, VALVE_STATE_UNKNOWN, 0, 100},
-    {{&htim1, TIM_CHANNEL_2, 1200, 1800}, VALVE_STATE_UNKNOWN, 0, 100}
-  };
+static CANController canCtrl;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -126,12 +120,8 @@ int main(void)
   MX_FDCAN1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
-  valveInit(&valves[0], 100.0f);
-
-  if (!CAN_Init(&hfdcan1, CAN_NODE_ENGINE_H747)) {
-    Error_Handler();
-  }
+  BOARD_ENGINE_Init();
+  CANController_Init(&canCtrl, &BOARD_ENGINE);
 
   /* USER CODE END 2 */
 
@@ -139,69 +129,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    CANHeader header;
-    uint8_t rxData[8];
-
-    if (CAN_Receive(&header, rxData))
-    {
-      if (header.frame.targetID == CAN_NODE_ENGINE_H747)
-      {
-        switch (header.frame.messageID)
-        {
-        case CAN_ID_CMD_VALVE:
-        {
-          CanValveIndex valve;
-          CanValveCmd cmd;
-          uint32_t ts;
-
-          // Parse
-          valveCmdPacketParse(header.code, rxData, &valve, &cmd, &ts);
-
-          // Ouvre/Ferme la valve
-          if (valve == CAN_VALVE_1) {
-            if (cmd == CAN_CMD_OPEN)  valveOpen(&(valves[0]));
-            if (cmd == CAN_CMD_CLOSE) valveClose(&(valves[0]));
-          }
-          else if (valve == CAN_VALVE_2) {
-            if (cmd == CAN_CMD_OPEN)  valveOpen(&(valves[1]));
-            if (cmd == CAN_CMD_CLOSE) valveClose(&(valves[1]));
-          }
-
-          // Envoie la réponse
-          ValveStatusPacket packet;
-          CanValveStatus status;
-
-          if(valve == CAN_VALVE_1) {
-            status = (valves[0].state == VALVE_STATE_OPEN) ? CAN_STATUS_OPEN : CAN_STATUS_CLOSED;
-          } else {
-            status = (valves[1].state == VALVE_STATE_OPEN) ? CAN_STATUS_OPEN : CAN_STATUS_CLOSED;
-          }
-
-          valveStatusPacketMake(valve, status, &packet);
-
-          CAN_Send(packet.header.code, packet.payload.data);
-          break;
-        }
-        case CAN_ID_COMM_PING:
-        {
-          // Communication test: reply to the sender with a PONG echoing the payload.
-          CANHeader resp = {0};
-          resp.frame.senderID  = CAN_NODE_ENGINE_H747;
-          resp.frame.targetID  = header.frame.senderID;   // reply to whoever pinged
-          resp.frame.messageID = CAN_ID_COMM_PONG;
-          CAN_Send(resp.code, rxData);                     // echo the received payload
-          break;
-        }
-        default:
-          break;
-        }
-      }
-    }
-
-    volatile int test = 0;
-    /*for (int i = 0; i < sizeof(valves) / sizeof(valves[0]); i++) {
-      valveUpdate(&valves[i]);
-    }*/
+    CANController_Process(&canCtrl);
 
     /* USER CODE END WHILE */
 
