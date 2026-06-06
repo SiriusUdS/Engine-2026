@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "dil/ipc_can.h"     /* inter-core CAN bridge (M7 side: Init/Send/Receive/MPU) */
+#include "dil/can_types.h"   /* HAL-free CAN header + node/message id enums            */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,7 +67,40 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* ---- TEMP: CAN ping/echo test (Engine = receiver; remove when done) ------- *
+ * The M4 owns FDCAN1 and bridges bus frames into the shared RX ring; this is
+ * the sole RX-ring consumer (drains it each loop). It replies to every PING it
+ * receives with a PONG that echoes the payload. Watch these in the debugger:
+ *   canPingRxCount - PINGs received & echoed   canPongTxCount - PONGs sent
+ *   canRxTotal     - total frames seen         canLastRxId/Data - last frame    */
+volatile uint32_t canPingRxCount = 0;
+volatile uint32_t canPongTxCount = 0;
+volatile uint32_t canRxTotal     = 0;
+volatile uint32_t canLastRxId    = 0;
+volatile uint8_t  canLastRxData[8] = {0};
 
+static void CAN_PingPongTest(void)
+{
+    /* Drain received frames: reply to each PING with a PONG, count them. */
+    uint32_t id;
+    uint8_t  d[8];
+    while (IpcCan_Receive(&id, d)) {
+        canRxTotal++;
+        canLastRxId = id;
+        for (uint32_t i = 0u; i < 8u; i++) { canLastRxData[i] = d[i]; }
+
+        CANHeader h; h.code = id;
+        if (h.frame.messageID == CAN_ID_COMM_PING) {
+            CANHeader r; r.code = 0;
+            r.frame.senderID  = CAN_NODE_ECU;
+            r.frame.targetID  = h.frame.senderID;  /* reply to whoever pinged */
+            r.frame.messageID = CAN_ID_COMM_PONG;
+            if (IpcCan_Send(r.code, d)) { canPongTxCount++; }  /* echo payload */
+            canPingRxCount++;
+        }
+    }
+}
+/* ---- end TEMP CAN ping/echo test ----------------------------------------- */
 /* USER CODE END 0 */
 
 /**
@@ -114,6 +148,9 @@ int main(void)
 #if defined(DUAL_CORE_BOOT_SYNC_SEQUENCE)
 /* When system initialization is finished, Cortex-M7 will release Cortex-M4 by means of
 HSEM notification */
+/* Initialise the shared CAN rings before the M4 is released, so they are
+   zeroed/armed before the M4 starts servicing the bridge. */
+IpcCan_Init();
 /*HW semaphore Clock enable*/
 __HAL_RCC_HSEM_CLK_ENABLE();
 /*Take HSEM */
@@ -146,6 +183,7 @@ Error_Handler();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    CAN_PingPongTest();   /* TEMP: CAN link test - Engine echoes PINGs as PONGs */
   }
   /* USER CODE END 3 */
 }
@@ -236,6 +274,12 @@ void MPU_Config(void)
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+  /* Mark the shared inter-core SRAM block (g_ipcCan + DMA buffers) at
+   * IPC_SHARED_MPU_BASE as Normal/non-cacheable/shareable so the CAN rings
+   * stay coherent between the M7 and M4. */
+  IpcCan_MpuConfigShared(MPU_REGION_NUMBER1);
+
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 

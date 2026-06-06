@@ -27,7 +27,8 @@ set(STM32_MCU_FLAGS  "-mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard " )
 
 #Linker options
 set(STM32_LINKER_SCRIPT stm32h747xx_flash_CM7.ld)
-set(STM32_LINKER_OPTION  )
+# Search path so the bare-filename INCLUDEs (shared IPC regions/sections) resolve
+set(STM32_LINKER_OPTION  "-L${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/ld")
 
 # Set the project name
 set(CMAKE_PROJECT_NAME Engine_CM7)
@@ -54,11 +55,13 @@ enable_language(C ASM)
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Inc
 )
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/dil/ipc_can.c
 )
 
 # Link directories setup

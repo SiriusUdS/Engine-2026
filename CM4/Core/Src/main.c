@@ -22,11 +22,14 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "dil/can.h"
+#include "dil/ipc_can.h"     /* inter-core CAN bridge (M4 side: IpcCan_M4Service) */
 #include "stm32h7xx_hal_fdcan.h"
 #include "stm32h7xx_hal_rcc_ex.h"
 #include "ValveController.h"
-#include "ValveStatusPacket.h"
-#include "ValveCmdPacket.h"
+/* ValveStatusPacket.h / ValveCmdPacket.h are only used by the local valve
+   handler, which is disabled (#if 0) for the CAN bridge test. They are left
+   un-included so this branch carries no diff to those valve files. Re-add them
+   when re-enabling the handler. */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -129,7 +132,7 @@ int main(void)
 
   valveInit(&valves[0], 100.0f);
 
-  if (!CAN_Init(&hfdcan1, CAN_NODE_ENGINE_H747)) {
+  if (!CAN_Init(&hfdcan1, CAN_NODE_ECU)) {
     Error_Handler();
   }
 
@@ -139,12 +142,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* Inter-core CAN bridge: the M7 owns the protocol/state machine, the M4
+       owns FDCAN1. Forward M7-queued frames to the bus and publish received
+       frames into the shared RX ring for the M7 (matches FillStation). */
+    IpcCan_M4Service();
+
+    /* NOTE: local valve/ping handling is disabled for the CAN bridge PING test -
+       IpcCan_M4Service() is now the sole RX-ring consumer, so the M7 handles
+       received frames. The original handler is preserved verbatim in the #if 0
+       block below; re-enable it once the bridge is validated. */
+#if 0
     CANHeader header;
     uint8_t rxData[8];
 
     if (CAN_Receive(&header, rxData))
     {
-      if (header.frame.targetID == CAN_NODE_ENGINE_H747)
+      if (header.frame.targetID == CAN_NODE_ECU)
       {
         switch (header.frame.messageID)
         {
@@ -186,7 +199,7 @@ int main(void)
         {
           // Communication test: reply to the sender with a PONG echoing the payload.
           CANHeader resp = {0};
-          resp.frame.senderID  = CAN_NODE_ENGINE_H747;
+          resp.frame.senderID  = CAN_NODE_ECU;
           resp.frame.targetID  = header.frame.senderID;   // reply to whoever pinged
           resp.frame.messageID = CAN_ID_COMM_PONG;
           CAN_Send(resp.code, rxData);                     // echo the received payload
@@ -197,11 +210,7 @@ int main(void)
         }
       }
     }
-
-    volatile int test = 0;
-    /*for (int i = 0; i < sizeof(valves) / sizeof(valves[0]); i++) {
-      valveUpdate(&valves[i]);
-    }*/
+#endif /* disabled local handling - M7 owns RX during the CAN bridge test */
 
     /* USER CODE END WHILE */
 

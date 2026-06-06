@@ -27,7 +27,8 @@ set(STM32_MCU_FLAGS  "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard" )
 
 #Linker options
 set(STM32_LINKER_SCRIPT stm32h747xx_flash_CM4.ld)
-set(STM32_LINKER_OPTION  )
+# Search path so the bare-filename INCLUDEs (shared IPC regions/sections) resolve
+set(STM32_LINKER_OPTION  "-L${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/ld")
 
 # Set the project name
 set(CMAKE_PROJECT_NAME Engine_CM4)
@@ -62,6 +63,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ServoDriver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/src/ValveController.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/dil/can.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stm-2026-common/Src/dil/ipc_can.c
     # Add user sources here
 )
 
