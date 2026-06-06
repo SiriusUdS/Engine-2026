@@ -5,6 +5,7 @@
 #include "can/handlers/handlerPing.h"
 #include "valve/ValveController.h"
 #include "can/packets/ValveStatusPacket.h"
+#include "dil/can.h"
 
 extern const CANControllerConfig BOARD_ENGINE;
 

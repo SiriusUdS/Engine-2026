@@ -30,7 +30,6 @@ static const CANHandlerEntry handlers[] = {
 };
 
 const CANControllerConfig BOARD_ENGINE = {
-    .hfdcan       = &hfdcan1,
     .nodeID       = CAN_NODE_ECU,
     .handlers     = handlers,
     .handlerCount = sizeof(handlers) / sizeof(handlers[0]),
