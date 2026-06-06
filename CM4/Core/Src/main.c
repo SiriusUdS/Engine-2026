@@ -129,9 +129,6 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  if (!CAN_Init(&hfdcan1, CAN_NODE_ECU)) {
-    Error_Handler();
-  }
   BOARD_ENGINE_Init();
   CANController_Init(&canCtrl, &BOARD_ENGINE);
 
