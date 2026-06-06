@@ -5,14 +5,14 @@ static Valve valves[] = {
         .servoConfig = {&htim1, TIM_CHANNEL_1, 1200, 1800},
         .openLimitSwitch  = {VALVE0_OPEN_LIMIT_GPIO_Port, VALVE0_OPEN_LIMIT_Pin},
         .closeLimitSwitch = {VALVE0_CLOSE_LIMIT_GPIO_Port, VALVE0_CLOSE_LIMIT_Pin},
-        .maxTransitTimeoutMs = 2500,
+        .maxTransitTimeoutMs = 25000,
         .state = VALVE_STATE_UNKNOWN
     },
     {
         .servoConfig = {&htim1, TIM_CHANNEL_2, 1200, 1800},
         .openLimitSwitch  = {VALVE1_OPEN_LIMIT_GPIO_Port, VALVE1_OPEN_LIMIT_Pin},
         .closeLimitSwitch = {VALVE1_CLOSE_LIMIT_GPIO_Port, VALVE1_CLOSE_LIMIT_Pin},
-        .maxTransitTimeoutMs = 2500,
+        .maxTransitTimeoutMs = 25000,
         .state = VALVE_STATE_UNKNOWN
     }
 };
@@ -38,7 +38,7 @@ const CANControllerConfig BOARD_ENGINE = {
 void BOARD_ENGINE_Init(void)
 {
     for (uint32_t i = 0; i < valveCtx.valveCount; i++) {
-        valveInit(&valves[i], 2500); 
+        valveInit(&valves[i], 25000); 
     }
 
     if (!CAN_Init(&hfdcan1, CAN_NODE_ECU))
@@ -49,15 +49,19 @@ void BOARD_ENGINE_Update(void)
 {
     for (uint32_t i = 0; i < valveCtx.valveCount; i++) {
         // Read each switch
-        bool openPinSet  = (HAL_GPIO_ReadPin(valves[i].openLimitSwitch.port, 
-                                             valves[i].openLimitSwitch.pin) == GPIO_PIN_SET);
+        bool openPinSet = (HAL_GPIO_ReadPin(valves[i].openLimitSwitch.port, 
+                                            valves[i].openLimitSwitch.pin) == GPIO_PIN_SET);
                                              
         bool closePinSet = (HAL_GPIO_ReadPin(valves[i].closeLimitSwitch.port, 
-                                             valves[i].closeLimitSwitch.pin) == GPIO_PIN_SET);
+                                            valves[i].closeLimitSwitch.pin) == GPIO_PIN_SET);
 
         // Update the valve state
         valveUpdate(&valves[i], openPinSet, closePinSet);
     }
+}
+
+void BOARD_ENGINE_TestValve(void){
+    valveOpen(&valves[0]);
 }
 
 void BOARD_ENGINE_SendValveStatus(void)

@@ -274,12 +274,6 @@ void MPU_Config(void)
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
-  /* Mark the shared inter-core SRAM block (g_ipcCan + DMA buffers) at
-   * IPC_SHARED_MPU_BASE as Normal/non-cacheable/shareable so the CAN rings
-   * stay coherent between the M7 and M4. */
-  IpcCan_MpuConfigShared(MPU_REGION_NUMBER1);
-
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 

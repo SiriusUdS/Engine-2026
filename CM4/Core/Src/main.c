@@ -137,6 +137,8 @@ int main(void)
 
   uint32_t lastCanTxMs = 0;
   const uint32_t CAN_TX_INTERVAL_MS = 10;
+
+  BOARD_ENGINE_TestValve();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -217,11 +219,11 @@ int main(void)
     CANController_Process(&canCtrl);
     BOARD_ENGINE_Update();
   
-    if ((currentMs - lastCanTxMs) >= CAN_TX_INTERVAL_MS) {
+    /*if ((currentMs - lastCanTxMs) >= CAN_TX_INTERVAL_MS) {
       lastCanTxMs = currentMs; 
 
       BOARD_ENGINE_SendValveStatus();
-    }
+    }*/
 
     /* USER CODE END WHILE */
 
@@ -376,7 +378,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pins : VALVE0_OPEN_LIMIT_Pin VALVE0_CLOSE_LIMIT_Pin VALVE1_OPEN_LIMIT_Pin VALVE1_CLOSE_LIMIT_Pin */
   GPIO_InitStruct.Pin = VALVE0_OPEN_LIMIT_Pin|VALVE0_CLOSE_LIMIT_Pin|VALVE1_OPEN_LIMIT_Pin|VALVE1_CLOSE_LIMIT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */

@@ -12,3 +12,4 @@ extern const CANControllerConfig BOARD_ENGINE;
 void BOARD_ENGINE_Init(void);
 void BOARD_ENGINE_Update(void);
 void BOARD_ENGINE_SendValveStatus(void);
+void BOARD_ENGINE_TestValve(void);
