@@ -182,16 +182,27 @@ int main(void)
           CAN_Send(packet.header.code, packet.payload.data);
           break;
         }
+        case CAN_ID_COMM_PING:
+        {
+          // Communication test: reply to the sender with a PONG echoing the payload.
+          CANHeader resp = {0};
+          resp.frame.senderID  = CAN_NODE_ENGINE_H747;
+          resp.frame.targetID  = header.frame.senderID;   // reply to whoever pinged
+          resp.frame.messageID = CAN_ID_COMM_PONG;
+          CAN_Send(resp.code, rxData);                     // echo the received payload
+          break;
+        }
         default:
           break;
         }
       }
     }
 
+    volatile int test = 0;
     /*for (int i = 0; i < sizeof(valves) / sizeof(valves[0]); i++) {
       valveUpdate(&valves[i]);
     }*/
-   
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
