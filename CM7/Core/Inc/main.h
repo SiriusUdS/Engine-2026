@@ -49,14 +49,25 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+extern TIM_HandleTypeDef htim1;
+extern FDCAN_HandleTypeDef hfdcan1;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define VALVE0_OPEN_LIMIT_Pin GPIO_PIN_2
+#define VALVE0_OPEN_LIMIT_GPIO_Port GPIOE
+#define VALVE0_CLOSE_LIMIT_Pin GPIO_PIN_3
+#define VALVE0_CLOSE_LIMIT_GPIO_Port GPIOE
+#define VALVE1_OPEN_LIMIT_Pin GPIO_PIN_4
+#define VALVE1_OPEN_LIMIT_GPIO_Port GPIOE
+#define VALVE1_CLOSE_LIMIT_Pin GPIO_PIN_5
+#define VALVE1_CLOSE_LIMIT_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 
