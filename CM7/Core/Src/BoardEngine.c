@@ -41,13 +41,12 @@ void BOARD_ENGINE_Init(void)
         valveInit(&valves[i], 25000); 
     }
 
-    if (!CAN_Init(&hfdcan1, CAN_NODE_ECU))
-        Error_Handler();
+    if (!CAN_Init(&hfdcan1, CAN_NODE_ECU)) Error_Handler();
 }
 
 void BOARD_ENGINE_Update(void)
 {
-    for (uint32_t i = 0; i < valveCtx.valveCount; i++) {
+    for (uint32_t i = 1; i < valveCtx.valveCount; i++) {
         // Read each switch
         bool openPinSet = (HAL_GPIO_ReadPin(valves[i].openLimitSwitch.port, 
                                             valves[i].openLimitSwitch.pin) == GPIO_PIN_SET);
@@ -58,10 +57,6 @@ void BOARD_ENGINE_Update(void)
         // Update the valve state
         valveUpdate(&valves[i], openPinSet, closePinSet);
     }
-}
-
-void BOARD_ENGINE_TestValve(void){
-    valveOpen(&valves[0]);
 }
 
 void BOARD_ENGINE_SendValveStatus(void)

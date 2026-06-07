@@ -21,13 +21,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "dil/ipc_can.h"     /* inter-core CAN bridge (M7 side: Init/Send/Receive/MPU) */
 #include "dil/can_types.h"   /* HAL-free CAN header + node/message id enums            */
 #include "stm32h7xx_hal_fdcan.h"
 #include "stm32h7xx_hal_rcc_ex.h"
 #include "valve/ValveController.h"
 #include "BoardEngine.h"
 #include "can/CANController.h"
+#include "dil/can_bus.h"  
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,9 +94,9 @@ volatile uint8_t  canLastRxData[8] = {0};
 static void CAN_PingPongTest(void)
 {
     /* Drain received frames: reply to each PING with a PONG, count them. */
-    uint32_t id;
+    CANHeader id;
     uint8_t  d[8];
-    while (IpcCan_Receive(&id, d)) {
+    while (CanBus_Receive(&id, d)) {
         canRxTotal++;
         canLastRxId = id;
         for (uint32_t i = 0u; i < 8u; i++) { canLastRxData[i] = d[i]; }
@@ -172,7 +172,6 @@ HSEM notification */
   uint32_t lastCanTxMs = 0;
   const uint32_t CAN_TX_INTERVAL_MS = 10;
 
-  BOARD_ENGINE_TestValve();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -192,7 +191,7 @@ HSEM notification */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    //CAN_PingPongTest();   /* TEMP: CAN link test - Engine echoes PINGs as PONGs */
+    CAN_PingPongTest();   /* TEMP: CAN link test - Engine echoes PINGs as PONGs */
   }
   /* USER CODE END 3 */
 }
