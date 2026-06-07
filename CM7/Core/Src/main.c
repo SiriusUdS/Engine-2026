@@ -98,20 +98,10 @@ static void CAN_PingPongTest(void)
     uint8_t  d[8];
     while (CanBus_Receive(&id, d)) {
         canRxTotal++;
-        canLastRxId = id;
         for (uint32_t i = 0u; i < 8u; i++) { canLastRxData[i] = d[i]; }
-
-        CANHeader h; h.code = id;
-        if (h.frame.messageID == CAN_ID_COMM_PING) {
-            CANHeader r; r.code = 0;
-            r.frame.senderID  = CAN_NODE_ECU;
-            r.frame.targetID  = h.frame.senderID;  /* reply to whoever pinged */
-            r.frame.messageID = CAN_ID_COMM_PONG;
-            if (IpcCan_Send(r.code, d)) { canPongTxCount++; }  /* echo payload */
-            canPingRxCount++;
-        }
     }
 }
+
 /* ---- end TEMP CAN ping/echo test ----------------------------------------- */
 /* USER CODE END 0 */
 
@@ -191,7 +181,6 @@ HSEM notification */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    CAN_PingPongTest();   /* TEMP: CAN link test - Engine echoes PINGs as PONGs */
   }
   /* USER CODE END 3 */
 }
@@ -286,7 +275,7 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.MessageRAMOffset = 0;
   hfdcan1.Init.StdFiltersNbr = 0;
   hfdcan1.Init.ExtFiltersNbr = 1;
-  hfdcan1.Init.RxFifo0ElmtsNbr = 2;
+  hfdcan1.Init.RxFifo0ElmtsNbr = 32;
   hfdcan1.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
   hfdcan1.Init.RxFifo1ElmtsNbr = 0;
   hfdcan1.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
@@ -294,7 +283,7 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
   hfdcan1.Init.TxEventsNbr = 0;
   hfdcan1.Init.TxBuffersNbr = 0;
-  hfdcan1.Init.TxFifoQueueElmtsNbr = 2;
+  hfdcan1.Init.TxFifoQueueElmtsNbr = 32;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   hfdcan1.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)

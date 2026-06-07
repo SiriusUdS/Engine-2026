@@ -46,7 +46,7 @@ void BOARD_ENGINE_Init(void)
 
 void BOARD_ENGINE_Update(void)
 {
-    for (uint32_t i = 1; i < valveCtx.valveCount; i++) {
+    for (uint32_t i = 0; i < valveCtx.valveCount; i++) {
         // Read each switch
         bool openPinSet = (HAL_GPIO_ReadPin(valves[i].openLimitSwitch.port, 
                                             valves[i].openLimitSwitch.pin) == GPIO_PIN_SET);

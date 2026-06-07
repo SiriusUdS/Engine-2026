@@ -40,8 +40,6 @@ MEMORY
 {
 FLASH (rx)      : ORIGIN = 0x08100000, LENGTH = 1024K
 RAM (xrw)      : ORIGIN = 0x10000000, LENGTH = 288K
-/* Shared inter-core IPC + DMA regions (SHARED, SD_RAM) - identical on CM7/CM4 */
-INCLUDE stm32h747_ipc_regions.ld
 }
 /* Highest address of the user mode stack */
 _estack = 0x10048000;    /* end of RAM */
@@ -209,11 +207,6 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
-
-  
-
-  /* Shared inter-core IPC + DMA sections (.shared_ram, .sd_ram) - identical on CM7/CM4 */
-  INCLUDE stm32h747_ipc_sections.ld
 
   /* Remove information from the standard libraries */
   /DISCARD/ :
